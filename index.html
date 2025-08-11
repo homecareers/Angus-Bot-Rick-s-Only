@@ -5,120 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Olympus ANGUS Chatbot</title>
   <style>
-    body {
-      background-color: #0d0d15;
-      margin: 0;
-      padding: 0;
-    }
+    :root { --bg:#0d0d15; --panel:#0f0f1a; --panel2:#111122; --text:#fff; --accent:#4a4aff; }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; color: var(--text); }
     #angus-button {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #0f0f1a, #1e1e2f);
-      color: white;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      font-size: 16px;
-      padding: 10px 25px;
-      border-radius: 30px;
-      cursor: pointer;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
-      z-index: 1000;
-      transition: all 0.3s ease;
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg,#0f0f1a,#1e1e2f); color: var(--text);
+      font-weight: 700; font-size: 16px; padding: 10px 24px; border-radius: 999px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4); z-index: 1000; transition: transform .2s ease, opacity .2s ease;
     }
-    #angus-button:hover {
-      background: linear-gradient(135deg, #1e1e2f, #3c3c5c);
-      transform: translateX(-50%) scale(1.05);
+    #angus-button:hover { transform: translateX(-50%) scale(1.04); opacity: .95; }
+    #wrap {
+      margin: 90px auto 40px; width: 92%; max-width: 420px;
+      background: var(--panel); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,.45); overflow: hidden;
     }
-    #angus-chatbox {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 380px;
-      height: 500px;
-      background: #0d0d15;
-      color: white;
-      border-radius: 15px;
-      box-shadow: 0px 6px 20px rgba(0,0,0,0.6);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
+    #hdr { background: var(--panel2); padding: 12px 14px; text-align: center; font-weight: 800; letter-spacing:.3px; }
+    #msgs { height: 520px; padding: 10px 12px; overflow-y: auto; font-size: 14px; line-height: 1.45; }
+    #row { display: flex; border-top: 1px solid #222; }
+    #inp {
+      flex: 1; padding: 12px; background: #1a1a2b; color: var(--text);
+      border: 0; outline: none; font-size: 14px;
     }
-    #angus-header {
-      background: #111122;
-      padding: 12px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      letter-spacing: 1px;
-    }
-    #angus-messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-    }
-    #angus-input-container {
-      display: flex;
-      border-top: 1px solid #222;
-    }
-    #angus-input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-      background: #1a1a2b;
-      color: white;
-    }
-    #angus-send {
-      background: #4a4aff;
-      border: none;
-      color: white;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
+    #send { background: var(--accent); color: #fff; border: 0; padding: 0 16px; font-weight: 700; cursor: pointer; }
+    .sys { color: #aaa; font-style: italic; }
+    .err { color: #ff6b6b; }
+    .bubble { margin: 6px 0; }
+    .bubble b { font-weight: 700; }
   </style>
 </head>
 <body>
 
-<div id="angus-button">ANGUS™</div>
+  <div id="angus-button">ANGUS™</div>
 
-<div id="angus-chatbox">
-  <div id="angus-header">ANGUS™ — Olympus Mode</div>
-  <div id="angus-messages"></div>
-  <div id="angus-input-container">
-    <input type="text" id="angus-input" placeholder="Type and hit Enter..." />
-    <button id="angus-send">Send</button>
+  <div id="wrap" style="display:none">
+    <div id="hdr">ANGUS™ — Olympus Mode</div>
+    <div id="msgs"></div>
+    <div id="row">
+      <input id="inp" placeholder="Type and hit Enter..." autocomplete="off"/>
+      <button id="send">Send</button>
+    </div>
   </div>
-</div>
 
 <script>
-  // Your n8n webhook endpoint
+  // === CONFIG: your n8n PRODUCTION webhook endpoint ===
   const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/angus-chat";
 
-  const btn = document.getElementById("angus-button");
-  const chatbox = document.getElementById("angus-chatbox");
-  const messagesDiv = document.getElementById("angus-messages");
-  const input = document.getElementById("angus-input");
-  const sendBtn = document.getElementById("angus-send");
+  const $ = sel => document.querySelector(sel);
+  const btn = $("#angus-button");
+  const wrap = $("#wrap");
+  const msgs = $("#msgs");
+  const inp = $("#inp");
+  const sendBtn = $("#send");
 
   btn.addEventListener("click", () => {
-    chatbox.style.display = chatbox.style.display === "flex" ? "none" : "flex";
+    wrap.style.display = wrap.style.display === "none" ? "block" : "none";
   });
 
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+  function addLine(html, cls="") {
+    const div = document.createElement("div");
+    div.className = `bubble ${cls}`.trim();
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 
-    messagesDiv.innerHTML += `<div><strong>You:</strong> ${text}</div>`;
-    input.value = "";
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  async function send() {
+    const text = (inp.value || "").trim();
+    if (!text) return;
+    addLine(`<b>You:</b> ${text}`);
+    inp.value = "";
 
     try {
       const res = await fetch(N8N_URL, {
@@ -128,18 +83,17 @@
       });
       if (!res.ok) throw new Error(`Upstream ${res.status}`);
       const data = await res.json();
-      messagesDiv.innerHTML += `<div><strong>Angus:</strong> ${data.reply || "..."}</div>`;
-    } catch (err) {
-      messagesDiv.innerHTML += `<div style="color: red;"><strong>Error:</strong> Connection failed.</div>`;
+      addLine(`<b>Angus:</b> ${data.reply ?? "…"}`);
+    } catch (e) {
+      addLine(`<b>Error:</b> Connection failed.`, "err");
     }
-
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  sendBtn.addEventListener("click", sendMessage);
-  input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
+  sendBtn.addEventListener("click", send);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+
+  // Auto-open on load (optional)
+  window.addEventListener("load", () => { wrap.style.display = "block"; });
 </script>
 
 </body>
