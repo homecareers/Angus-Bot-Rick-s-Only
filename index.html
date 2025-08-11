@@ -1,67 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Olympus ANGUS Chatbot</title>
-  <style>
-    :root { --bg:#0d0d15; --panel:#0f0f1a; --panel2:#111122; --text:#fff; --accent:#4a4aff; }
-    * { box-sizing: border-box; }
-    body { background: var(--bg); margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; color: var(--text); }
-    #angus-button {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(135deg,#0f0f1a,#1e1e2f); color: var(--text);
-      font-weight: 700; font-size: 16px; padding: 10px 24px; border-radius: 999px; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,.4); z-index: 1000; transition: transform .2s ease, opacity .2s ease;
-    }
-    #angus-button:hover { transform: translateX(-50%) scale(1.04); opacity: .95; }
-    #wrap {
-      margin: 90px auto 40px; width: 92%; max-width: 420px;
-      background: var(--panel); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,.45); overflow: hidden;
-    }
-    #hdr { background: var(--panel2); padding: 12px 14px; text-align: center; font-weight: 800; letter-spacing:.3px; }
-    #msgs { height: 520px; padding: 10px 12px; overflow-y: auto; font-size: 14px; line-height: 1.45; }
-    #row { display: flex; border-top: 1px solid #222; }
-    #inp {
-      flex: 1; padding: 12px; background: #1a1a2b; color: var(--text);
-      border: 0; outline: none; font-size: 14px;
-    }
-    #send { background: var(--accent); color: #fff; border: 0; padding: 0 16px; font-weight: 700; cursor: pointer; }
-    .sys { color: #aaa; font-style: italic; }
-    .err { color: #ff6b6b; }
-    .bubble { margin: 6px 0; }
-    .bubble b { font-weight: 700; }
-  </style>
-</head>
-<body>
-
-  <div id="angus-button">ANGUS™</div>
-
-  <div id="wrap" style="display:none">
-    <div id="hdr">ANGUS™ — Olympus Mode</div>
-    <div id="msgs"></div>
-    <div id="row">
-      <input id="inp" placeholder="Type and hit Enter..." autocomplete="off"/>
-      <button id="send">Send</button>
-    </div>
-  </div>
-
 <script>
   // === CONFIG: your n8n PRODUCTION webhook endpoint ===
   const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/angus-chat";
 
   const $ = sel => document.querySelector(sel);
-  const btn = $("#angus-button");
-  const wrap = $("#wrap");
-  const msgs = $("#msgs");
-  const inp = $("#inp");
-  const sendBtn = $("#send");
+  const btn = document.getElementById("angus-button") || $("#angus-button");
+  const wrap = document.getElementById("wrap") || $("#wrap");
+  const msgs = document.getElementById("msgs") || $("#msgs");
+  const inp  = document.getElementById("inp")  || $("#inp");
+  const sendBtn = document.getElementById("send") || $("#send");
 
-  btn.addEventListener("click", () => {
-    wrap.style.display = wrap.style.display === "none" ? "block" : "none";
-  });
+  if (btn && wrap) {
+    btn.addEventListener("click", () => {
+      wrap.style.display = wrap.style.display === "none" ? "block" : "none";
+    });
+  }
 
-  function addLine(html, cls="") {
+  function addLine(html, cls = "") {
     const div = document.createElement("div");
     div.className = `bubble ${cls}`.trim();
     div.innerHTML = html;
@@ -69,32 +23,57 @@
     msgs.scrollTop = msgs.scrollHeight;
   }
 
+  // Small helper: fetch with timeout
+  function fetchWithTimeout(url, opts = {}, ms = 20000) {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  }
+
   async function send() {
     const text = (inp.value || "").trim();
     if (!text) return;
+
     addLine(`<b>You:</b> ${text}`);
     inp.value = "";
 
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetchWithTimeout(N8N_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text })
-      });
-      if (!res.ok) throw new Error(`Upstream ${res.status}`);
-      const data = await res.json();
+      }, 20000);
+
+      const raw = await res.text(); // read raw so we can show it on failure
+
+      if (!res.ok) {
+        // Show exact status and server reply
+        addLine(`<b>Error:</b> HTTP ${res.status} — ${raw || 'No response body'}`, "err");
+        console.error("ANGUS webhook error:", res.status, raw);
+        return;
+      }
+
+      // Try to parse JSON. If parse fails, show raw.
+      let data;
+      try { data = JSON.parse(raw); }
+      catch (e) {
+        addLine(`<b>Error:</b> Invalid JSON from server: ${raw.slice(0, 300)}`, "err");
+        console.error("Invalid JSON:", raw);
+        return;
+      }
+
       addLine(`<b>Angus:</b> ${data.reply ?? "…"}`);
-    } catch (e) {
-      addLine(`<b>Error:</b> Connection failed.`, "err");
+    } catch (err) {
+      // Network errors, timeouts, aborts, etc.
+      const msg = (err && err.message) ? err.message : String(err);
+      addLine(`<b>Error:</b> ${msg}`, "err");
+      console.error("ANGUS network failure:", err);
     }
   }
 
-  sendBtn.addEventListener("click", send);
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+  if (sendBtn) sendBtn.addEventListener("click", send);
+  if (inp) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
 
-  // Auto-open on load (optional)
-  window.addEventListener("load", () => { wrap.style.display = "block"; });
+  // Optional: open on load
+  window.addEventListener("load", () => { if (wrap) wrap.style.display = "block"; });
 </script>
-
-</body>
-</html>
