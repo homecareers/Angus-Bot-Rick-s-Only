@@ -1,79 +1,111 @@
-<script>
-  // === CONFIG: your n8n PRODUCTION webhook endpoint ===
-  const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/angus-chat";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Olympus ANGUS Chatbot</title>
+  <style>
+    :root { --bg:#0d0d15; --panel:#0f0f1a; --panel2:#111122; --text:#fff; --accent:#4a4aff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    #angus-button {
+      position:fixed; top:20px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#0f0f1a,#1e1e2f); color:#fff;
+      font-weight:700; font-size:16px; padding:10px 24px; border-radius:999px; cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,.4); z-index:1000; transition:transform .15s ease;
+    }
+    #angus-button:hover { transform:translateX(-50%) scale(1.04); }
+    #wrap { width:92%; max-width:420px; margin:90px auto 40px; background:var(--panel);
+      border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.45); overflow:hidden; display:block; }
+    #hdr { background:var(--panel2); padding:12px 14px; text-align:center; font-weight:800; letter-spacing:.3px; }
+    #msgs { height:520px; padding:10px 12px; overflow-y:auto; font-size:14px; line-height:1.45; }
+    #row { display:flex; border-top:1px solid #222; }
+    #inp { flex:1; padding:12px; background:#1a1a2b; color:#fff; border:0; outline:none; font-size:14px; }
+    #send { background:var(--accent); color:#fff; border:0; padding:0 16px; font-weight:700; cursor:pointer; }
+    .bubble { margin:6px 0; }
+    .err { color:#ff6b6b; }
+  </style>
+</head>
+<body>
 
-  const $ = sel => document.querySelector(sel);
-  const btn = document.getElementById("angus-button") || $("#angus-button");
-  const wrap = document.getElementById("wrap") || $("#wrap");
-  const msgs = document.getElementById("msgs") || $("#msgs");
-  const inp  = document.getElementById("inp")  || $("#inp");
-  const sendBtn = document.getElementById("send") || $("#send");
+  <div id="angus-button">ANGUS™</div>
 
-  if (btn && wrap) {
+  <div id="wrap">
+    <div id="hdr">ANGUS™ — Olympus Mode</div>
+    <div id="msgs"></div>
+    <div id="row">
+      <input id="inp" placeholder="Type and hit Enter..." autocomplete="off" />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // === CONFIG: your n8n Production Webhook ===
+    const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/angus-chat";
+
+    const btn  = document.getElementById("angus-button");
+    const wrap = document.getElementById("wrap");
+    const msgs = document.getElementById("msgs");
+    const inp  = document.getElementById("inp");
+    const sendBtn = document.getElementById("send");
+
     btn.addEventListener("click", () => {
       wrap.style.display = wrap.style.display === "none" ? "block" : "none";
     });
-  }
 
-  function addLine(html, cls = "") {
-    const div = document.createElement("div");
-    div.className = `bubble ${cls}`.trim();
-    div.innerHTML = html;
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-
-  // Small helper: fetch with timeout
-  function fetchWithTimeout(url, opts = {}, ms = 20000) {
-    const ctrl = new AbortController();
-    const id = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
-  }
-
-  async function send() {
-    const text = (inp.value || "").trim();
-    if (!text) return;
-
-    addLine(`<b>You:</b> ${text}`);
-    inp.value = "";
-
-    try {
-      const res = await fetchWithTimeout(N8N_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      }, 20000);
-
-      const raw = await res.text(); // read raw so we can show it on failure
-
-      if (!res.ok) {
-        // Show exact status and server reply
-        addLine(`<b>Error:</b> HTTP ${res.status} — ${raw || 'No response body'}`, "err");
-        console.error("ANGUS webhook error:", res.status, raw);
-        return;
-      }
-
-      // Try to parse JSON. If parse fails, show raw.
-      let data;
-      try { data = JSON.parse(raw); }
-      catch (e) {
-        addLine(`<b>Error:</b> Invalid JSON from server: ${raw.slice(0, 300)}`, "err");
-        console.error("Invalid JSON:", raw);
-        return;
-      }
-
-      addLine(`<b>Angus:</b> ${data.reply ?? "…"}`);
-    } catch (err) {
-      // Network errors, timeouts, aborts, etc.
-      const msg = (err && err.message) ? err.message : String(err);
-      addLine(`<b>Error:</b> ${msg}`, "err");
-      console.error("ANGUS network failure:", err);
+    function addLine(html, cls="") {
+      const div = document.createElement("div");
+      div.className = `bubble ${cls}`.trim();
+      div.innerHTML = html;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
     }
-  }
 
-  if (sendBtn) sendBtn.addEventListener("click", send);
-  if (inp) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+    function fetchWithTimeout(url, opts = {}, ms = 20000) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), ms);
+      return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(t));
+    }
 
-  // Optional: open on load
-  window.addEventListener("load", () => { if (wrap) wrap.style.display = "block"; });
-</script>
+    async function send() {
+      const text = (inp.value || "").trim();
+      if (!text) return;
+
+      addLine(`<b>You:</b> ${text}`);
+      inp.value = "";
+
+      try {
+        const res = await fetchWithTimeout(N8N_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        }, 20000);
+
+        const raw = await res.text();
+
+        if (!res.ok) {
+          addLine(`<b>Error:</b> HTTP ${res.status} — ${raw || 'No response body'}`, "err");
+          console.error("ANGUS webhook error:", res.status, raw);
+          return;
+        }
+
+        let data;
+        try { data = JSON.parse(raw); }
+        catch (e) {
+          addLine(`<b>Error:</b> Invalid JSON from server: ${raw.slice(0, 300)}`, "err");
+          console.error("Invalid JSON from server:", raw);
+          return;
+        }
+
+        addLine(`<b>Angus:</b> ${data.reply ?? "…"}`);
+      } catch (e) {
+        addLine(`<b>Error:</b> ${e.message || e}`, "err");
+        console.error("Network error:", e);
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  </script>
+</body>
+</html>
