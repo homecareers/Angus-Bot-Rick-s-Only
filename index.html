@@ -3,111 +3,364 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Olympus ANGUS Chatbot</title>
+  <title>ANGUS™ - The Strategist</title>
   <style>
-    :root { --bg:#0d0d15; --panel:#0f0f1a; --panel2:#111122; --text:#fff; --accent:#4a4aff; }
-    * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    #angus-button {
-      position:fixed; top:20px; left:50%; transform:translateX(-50%);
-      background:linear-gradient(135deg,#0f0f1a,#1e1e2f); color:#fff;
-      font-weight:700; font-size:16px; padding:10px 24px; border-radius:999px; cursor:pointer;
-      box-shadow:0 4px 12px rgba(0,0,0,.4); z-index:1000; transition:transform .15s ease;
+    :root { 
+      --bg: #0d0d15; 
+      --panel: #0f0f1a; 
+      --panel2: #111122; 
+      --text: #fff; 
+      --accent: #4a4aff; 
+      --success: #00d4aa;
+      --error: #ff6b6b;
     }
-    #angus-button:hover { transform:translateX(-50%) scale(1.04); }
-    #wrap { width:92%; max-width:420px; margin:90px auto 40px; background:var(--panel);
-      border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.45); overflow:hidden; display:block; }
-    #hdr { background:var(--panel2); padding:12px 14px; text-align:center; font-weight:800; letter-spacing:.3px; }
-    #msgs { height:520px; padding:10px 12px; overflow-y:auto; font-size:14px; line-height:1.45; }
-    #row { display:flex; border-top:1px solid #222; }
-    #inp { flex:1; padding:12px; background:#1a1a2b; color:#fff; border:0; outline:none; font-size:14px; }
-    #send { background:var(--accent); color:#fff; border:0; padding:0 16px; font-weight:700; cursor:pointer; }
-    .bubble { margin:6px 0; }
-    .err { color:#ff6b6b; }
+    
+    * { box-sizing: border-box; }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      overflow-x: hidden;
+    }
+    
+    #angus-button {
+      position: fixed; 
+      top: 20px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #0f0f1a, #1e1e2f); 
+      color: #fff;
+      font-weight: 700; 
+      font-size: 16px; 
+      padding: 12px 28px; 
+      border-radius: 999px; 
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4); 
+      z-index: 1000; 
+      transition: all 0.3s ease;
+      border: 1px solid rgba(74, 74, 255, 0.3);
+    }
+    
+    #angus-button:hover { 
+      transform: translateX(-50%) scale(1.05); 
+      box-shadow: 0 6px 20px rgba(74, 74, 255, 0.3);
+    }
+    
+    #wrap { 
+      width: 92%; 
+      max-width: 440px; 
+      margin: 90px auto 40px; 
+      background: var(--panel);
+      border-radius: 16px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,.6); 
+      overflow: hidden; 
+      display: none;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    #hdr { 
+      background: linear-gradient(135deg, var(--panel2), #1a1a2f); 
+      padding: 16px; 
+      text-align: center; 
+      font-weight: 800; 
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    #msgs { 
+      height: 480px; 
+      padding: 16px; 
+      overflow-y: auto; 
+      font-size: 14px; 
+      line-height: 1.5;
+      background: linear-gradient(180deg, var(--panel) 0%, #0a0a12 100%);
+    }
+    
+    #msgs::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #msgs::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+    
+    #msgs::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 3px;
+    }
+    
+    #input-row { 
+      display: flex; 
+      border-top: 1px solid rgba(255,255,255,0.1);
+      background: var(--panel2);
+    }
+    
+    #inp { 
+      flex: 1; 
+      padding: 16px; 
+      background: transparent; 
+      color: #fff; 
+      border: 0; 
+      outline: none; 
+      font-size: 14px;
+      font-family: inherit;
+    }
+    
+    #inp::placeholder {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    #send { 
+      background: var(--accent); 
+      color: #fff; 
+      border: 0; 
+      padding: 0 20px; 
+      font-weight: 700; 
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    
+    #send:hover {
+      background: #5a5aff;
+      transform: scale(1.02);
+    }
+    
+    #send:disabled {
+      background: #333;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .bubble { 
+      margin: 12px 0; 
+      padding: 12px 16px;
+      border-radius: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .user-msg {
+      background: linear-gradient(135deg, var(--accent), #5a5aff);
+      margin-left: 40px;
+      text-align: right;
+    }
+    
+    .ai-msg {
+      background: linear-gradient(135deg, #1a1a2f, #252540);
+      margin-right: 40px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .system-msg {
+      background: linear-gradient(135deg, var(--success), #00b894);
+      text-align: center;
+      margin: 8px 20px;
+      font-size: 13px;
+    }
+    
+    .error-msg { 
+      background: linear-gradient(135deg, var(--error), #e55a5a);
+      border: 1px solid rgba(255,255,255,0.2);
+      margin: 8px 20px;
+    }
+    
+    .typing {
+      display: inline-block;
+    }
+    
+    .typing::after {
+      content: '●●●';
+      animation: typing 1.5s infinite;
+      margin-left: 4px;
+    }
+    
+    @keyframes typing {
+      0%, 20% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    
+    .timestamp {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    
+    @media (max-width: 480px) {
+      #wrap {
+        width: 100%;
+        margin: 70px 0 0 0;
+        border-radius: 0;
+        height: 100vh;
+      }
+      
+      #msgs {
+        height: calc(100vh - 140px);
+      }
+    }
   </style>
 </head>
 <body>
 
-  <div id="angus-button">ANGUS™</div>
+  <div id="angus-button">ANGUS™ — The Strategist</div>
 
   <div id="wrap">
-    <div id="hdr">ANGUS™ — Olympus Mode</div>
-    <div id="msgs"></div>
-    <div id="row">
-      <input id="inp" placeholder="Type and hit Enter..." autocomplete="off" />
+    <div id="hdr">ANGUS™ — The Strategist</div>
+    <div id="msgs">
+      <div class="bubble system-msg">
+        Welcome! I'm ANGUS, your strategic health and wellness advisor. How can I help you today?
+      </div>
+    </div>
+    <div id="input-row">
+      <input id="inp" placeholder="Ask about health, nutrition, or Herbalife products..." autocomplete="off" />
       <button id="send">Send</button>
     </div>
   </div>
 
   <script>
-    // === CONFIG: your n8n Production Webhook ===
-    const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/daeb8c63-6619-47dc-b961-944e246e7ea4";
+    // === CONFIG ===
+    const N8N_URL = "https://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/angus-chat";
+    
+    // Generate or get user ID
+    let userId = localStorage.getItem('angus_user_id');
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('angus_user_id', userId);
+    }
 
-    const btn  = document.getElementById("angus-button");
+    const btn = document.getElementById("angus-button");
     const wrap = document.getElementById("wrap");
     const msgs = document.getElementById("msgs");
-    const inp  = document.getElementById("inp");
+    const inp = document.getElementById("inp");
     const sendBtn = document.getElementById("send");
 
+    // Toggle chat visibility
     btn.addEventListener("click", () => {
-      wrap.style.display = wrap.style.display === "none" ? "block" : "none";
+      const isVisible = wrap.style.display !== "none";
+      wrap.style.display = isVisible ? "none" : "block";
+      if (!isVisible) {
+        inp.focus();
+      }
     });
 
-    function addLine(html, cls="") {
+    // Add message to chat
+    function addMessage(content, type = "ai", showTimestamp = true) {
       const div = document.createElement("div");
-      div.className = `bubble ${cls}`.trim();
+      div.className = `bubble ${type}-msg`;
+      
+      let html = content;
+      if (showTimestamp) {
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        html += `<div class="timestamp">${time}</div>`;
+      }
+      
       div.innerHTML = html;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
     }
 
-    function fetchWithTimeout(url, opts = {}, ms = 20000) {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), ms);
-      return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(t));
+    // Show typing indicator
+    function showTyping() {
+      const div = document.createElement("div");
+      div.className = "bubble ai-msg typing-indicator";
+      div.innerHTML = '<span class="typing">ANGUS is thinking</span>';
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+      return div;
     }
 
-    async function send() {
-      const text = (inp.value || "").trim();
-      if (!text) return;
-
-      addLine(`<b>You:</b> ${text}`);
-      inp.value = "";
-
-      try {
-        const res = await fetchWithTimeout(N8N_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
-        }, 20000);
-
-        const raw = await res.text();
-
-        if (!res.ok) {
-          addLine(`<b>Error:</b> HTTP ${res.status} — ${raw || 'No response body'}`, "err");
-          console.error("ANGUS webhook error:", res.status, raw);
-          return;
-        }
-
-        let data;
-        try { data = JSON.parse(raw); }
-        catch (e) {
-          addLine(`<b>Error:</b> Invalid JSON from server: ${raw.slice(0, 300)}`, "err");
-          console.error("Invalid JSON from server:", raw);
-          return;
-        }
-
-        // Fixed: Look for message field instead of reply
-        const response = data.message || data.reply || data.content || "No response";
-        addLine(`<b>Angus:</b> ${response}`);
-      } catch (e) {
-        addLine(`<b>Error:</b> ${e.message || e}`, "err");
-        console.error("Network error:", e);
+    // Remove typing indicator
+    function removeTyping(element) {
+      if (element && element.parentNode) {
+        element.parentNode.removeChild(element);
       }
     }
 
-    sendBtn.addEventListener("click", send);
-    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+    // Send message with enhanced error handling
+    async function sendMessage() {
+      const text = inp.value.trim();
+      if (!text || sendBtn.disabled) return;
+
+      // Add user message
+      addMessage(`<strong>You:</strong> ${text}`, "user");
+      inp.value = "";
+      
+      // Disable input while processing
+      sendBtn.disabled = true;
+      sendBtn.textContent = "...";
+      
+      const typingElement = showTyping();
+
+      try {
+        const response = await fetch(N8N_URL, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ 
+            message: text,
+            user_id: userId,
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        removeTyping(typingElement);
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.message) {
+          addMessage(`<strong>ANGUS:</strong> ${data.message}`, "ai");
+        } else {
+          throw new Error("No message in response");
+        }
+
+      } catch (error) {
+        removeTyping(typingElement);
+        console.error("Chat error:", error);
+        
+        let errorMsg = "I'm having trouble connecting right now. Please try again.";
+        if (error.message.includes("Failed to fetch")) {
+          errorMsg = "Connection failed. Please check your internet and try again.";
+        }
+        
+        addMessage(`<strong>Error:</strong> ${errorMsg}`, "error");
+      } finally {
+        // Re-enable input
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Send";
+        inp.focus();
+      }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener("click", sendMessage);
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-focus when chat opens
+    inp.addEventListener("focus", () => {
+      setTimeout(() => inp.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+    });
+
+    // Initialize
+    console.log("ANGUS Chatbot initialized with user ID:", userId);
   </script>
 </body>
 </html>
