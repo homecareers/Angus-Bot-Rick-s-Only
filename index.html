@@ -97,7 +97,8 @@
           return;
         }
 
-        addLine(`<b>Angus:</b> ${data.reply ?? "…"}`);
+        // Fixed: Look for message field instead of reply
+        addLine(`<b>Angus:</b> ${data.message ?? data.reply ?? "…"}`);
       } catch (e) {
         addLine(`<b>Error:</b> ${e.message || e}`, "err");
         console.error("Network error:", e);
