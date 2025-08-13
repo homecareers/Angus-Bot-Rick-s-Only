@@ -6,116 +6,140 @@
   <title>ANGUS™ — The Strategist</title>
   <style>
     body {
-      background-color: #0f0f1c;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+      background-color: #0f0f1a;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
+      margin: 0;
     }
 
     .chat-container {
-      background: #1a1a2e;
-      border-radius: 15px;
-      padding: 20px;
-      width: 100%;
+      background-color: #1a1a2e;
+      border-radius: 20px;
+      width: 90%;
       max-width: 600px;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
 
     .chat-header {
-      font-size: 1.3em;
-      font-weight: bold;
       text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
       margin-bottom: 20px;
     }
 
-    .chat-bubble {
-      padding: 12px 16px;
+    .chat-message {
       margin: 10px 0;
-      border-radius: 10px;
+      padding: 15px;
+      border-radius: 15px;
       max-width: 80%;
-      line-height: 1.4;
+      white-space: pre-line;
     }
 
     .bot {
-      background-color: #10d6a0;
-      color: #000;
+      background-color: #00d4aa;
+      color: black;
       align-self: flex-start;
     }
 
     .user {
-      background-color: #5f59f7;
-      color: #fff;
+      background-color: #5d5dff;
+      color: white;
       align-self: flex-end;
+      margin-left: auto;
     }
 
-    .input-container {
+    .error {
+      background-color: #ff5c5c;
+      color: white;
+    }
+
+    .chat-input-container {
       display: flex;
       margin-top: 20px;
     }
 
-    input {
+    .chat-input {
       flex: 1;
       padding: 10px;
-      border-radius: 5px 0 0 5px;
+      font-size: 1rem;
+      border-radius: 8px 0 0 8px;
       border: none;
-      outline: none;
     }
 
-    button {
-      padding: 10px 20px;
-      background-color: #5f59f7;
+    .chat-send {
+      background-color: #5d5dff;
       color: white;
       border: none;
-      border-radius: 0 5px 5px 0;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 0 8px 8px 0;
       cursor: pointer;
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-header">ANGUS™ — The Strategist</div>
-    <div id="chat" style="display: flex; flex-direction: column;"></div>
-    <div class="input-container">
-      <input type="text" id="user-input" placeholder="Ask about health, nutrition, or Herbalife products..."/>
-      <button onclick="sendMessage()">Send</button>
+    <div class="messages" id="messages">
+      <div class="chat-message bot">
+        Welcome! I'm ANGUS, your strategic health and wellness advisor. How can I help you today?
+      </div>
+    </div>
+    <div class="chat-input-container">
+      <input type="text" id="userInput" class="chat-input" placeholder="Ask about health, nutrition, or Herbalife products..." />
+      <button onclick="sendMessage()" class="chat-send">Send</button>
     </div>
   </div>
 
   <script>
-    const chat = document.getElementById('chat');
-
-    function appendMessage(sender, message, className) {
-      const bubble = document.createElement('div');
-      bubble.className = `chat-bubble ${className}`;
-      bubble.innerHTML = `<strong>${sender}:</strong> ${message}`;
-      chat.appendChild(bubble);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
     async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const userMessage = input.value.trim();
-      if (!userMessage) return;
+      const input = document.getElementById('userInput');
+      const message = input.value.trim();
+      if (!message) return;
 
-      appendMessage('You', userMessage, 'user');
+      // Append user message
+      const messages = document.getElementById('messages');
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat-message user';
+      userMessage.textContent = `You: ${message}`;
+      messages.appendChild(userMessage);
+
       input.value = '';
 
       try {
-        const response = await fetch('https://homecareers.app.n8n.cloud/webhook/angus-chat', {
+        const response = await fetch('https://your-n8n-webhook-url', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ message: userMessage }),
+          body: JSON.stringify({ message })
         });
 
-        const botText = await response.text(); // 👈 Get plain text directly
-        appendMessage('ANGUS', botText, 'bot');
+        const text = await response.text();
+
+        // Extract just the plain text (remove wrapping object if present)
+        const clean = text.match(/"=?(.*?)"$/s);
+        const botReply = clean ? clean[1] : text;
+
+        const botMessage = document.createElement('div');
+        botMessage.className = 'chat-message bot';
+        botMessage.innerHTML = `<strong>ANGUS:</strong> ${botReply}`;
+        messages.appendChild(botMessage);
       } catch (error) {
-        appendMessage('ANGUS', 'Sorry, something went wrong.', 'bot');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'chat-message error';
+        errorMessage.innerHTML = `<strong>Error:</strong> I'm having trouble connecting right now. Please try again.`;
+        messages.appendChild(errorMessage);
       }
     }
   </script>
