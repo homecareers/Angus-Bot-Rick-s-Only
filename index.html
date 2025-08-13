@@ -3,345 +3,145 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ANGUS™ - The Strategist</title>
+  <title>ANGUS™ — The Strategist</title>
   <style>
-    :root { 
-      --bg: #0d0d15; 
-      --panel: #0f0f1a; 
-      --panel2: #111122; 
-      --text: #fff; 
-      --accent: #4a4aff; 
-      --success: #00d4aa;
-      --error: #ff6b6b;
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue", sans-serif;
+      background-color: #0f0f1a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-
-    * { box-sizing: border-box; }
-
-    body { 
-      margin: 0; 
-      background: var(--bg); 
-      color: var(--text); 
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      overflow-x: hidden;
+    .header {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 20px;
     }
-
-    #angus-button {
-      position: fixed; 
-      top: 20px; 
-      left: 50%; 
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #0f0f1a, #1e1e2f); 
-      color: #fff;
-      font-weight: 700; 
-      font-size: 16px; 
-      padding: 12px 28px; 
-      border-radius: 999px; 
+    .chat-container {
+      background: #181825;
+      border-radius: 20px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .user {
+      align-self: flex-end;
+      background-color: #5555ff;
+      color: white;
+    }
+    .bot {
+      align-self: flex-start;
+      background-color: #11c9a5;
+      color: black;
+      font-weight: 600;
+    }
+    .error {
+      background-color: #e14e4e;
+      color: white;
+      align-self: flex-start;
+      font-weight: 600;
+    }
+    .input-row {
+      display: flex;
+      width: 100%;
+      margin-top: 20px;
+    }
+    input {
+      flex-grow: 1;
+      padding: 10px;
+      border-radius: 5px 0 0 5px;
+      border: none;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      border-radius: 0 5px 5px 0;
+      border: none;
+      background-color: #4b52fa;
+      color: white;
+      font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,.4); 
-      z-index: 1000; 
-      transition: all 0.3s ease;
-      border: 1px solid rgba(74, 74, 255, 0.3);
-    }
-
-    #angus-button:hover { 
-      transform: translateX(-50%) scale(1.05); 
-      box-shadow: 0 6px 20px rgba(74, 74, 255, 0.3);
-    }
-
-    #wrap { 
-      width: 92%; 
-      max-width: 440px; 
-      margin: 90px auto 40px; 
-      background: var(--panel);
-      border-radius: 16px; 
-      box-shadow: 0 8px 32px rgba(0,0,0,.6); 
-      overflow: hidden; 
-      display: none;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    #hdr { 
-      background: linear-gradient(135deg, var(--panel2), #1a1a2f); 
-      padding: 16px; 
-      text-align: center; 
-      font-weight: 800; 
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    #msgs { 
-      height: 480px; 
-      padding: 16px; 
-      overflow-y: auto; 
-      font-size: 14px; 
-      line-height: 1.5;
-      background: linear-gradient(180deg, var(--panel) 0%, #0a0a12 100%);
-    }
-
-    #msgs::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #msgs::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
-    }
-
-    #msgs::-webkit-scrollbar-thumb {
-      background: var(--accent);
-      border-radius: 3px;
-    }
-
-    #input-row { 
-      display: flex; 
-      border-top: 1px solid rgba(255,255,255,0.1);
-      background: var(--panel2);
-    }
-
-    #inp { 
-      flex: 1; 
-      padding: 16px; 
-      background: transparent; 
-      color: #fff; 
-      border: 0; 
-      outline: none; 
-      font-size: 14px;
-      font-family: inherit;
-    }
-
-    #inp::placeholder {
-      color: rgba(255,255,255,0.5);
-    }
-
-    #send { 
-      background: var(--accent); 
-      color: #fff; 
-      border: 0; 
-      padding: 0 20px; 
-      font-weight: 700; 
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-
-    #send:hover {
-      background: #5a5aff;
-      transform: scale(1.02);
-    }
-
-    #send:disabled {
-      background: #333;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .bubble { 
-      margin: 12px 0; 
-      padding: 12px 16px;
-      border-radius: 12px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .user-msg {
-      background: linear-gradient(135deg, var(--accent), #5a5aff);
-      margin-left: 40px;
-      text-align: right;
-    }
-
-    .ai-msg {
-      background: linear-gradient(135deg, #1a1a2f, #252540);
-      margin-right: 40px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .system-msg {
-      background: linear-gradient(135deg, var(--success), #00b894);
-      text-align: center;
-      margin: 8px 20px;
-      font-size: 13px;
-    }
-
-    .error-msg { 
-      background: linear-gradient(135deg, var(--error), #e55a5a);
-      border: 1px solid rgba(255,255,255,0.2);
-      margin: 8px 20px;
-    }
-
-    .typing {
-      display: inline-block;
-    }
-
-    .typing::after {
-      content: '●●●';
-      animation: typing 1.5s infinite;
-      margin-left: 4px;
-    }
-
-    @keyframes typing {
-      0%, 20% { opacity: 0; }
-      50% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-
-    .timestamp {
-      font-size: 11px;
-      opacity: 0.6;
-      margin-top: 4px;
-    }
-
-    @media (max-width: 480px) {
-      #wrap {
-        width: 100%;
-        margin: 70px 0 0 0;
-        border-radius: 0;
-        height: 100vh;
-      }
-      
-      #msgs {
-        height: calc(100vh - 140px);
-      }
     }
   </style>
 </head>
 <body>
-
-  <div id="angus-button">ANGUS™ — The Strategist</div>
-
-  <div id="wrap">
-    <div id="hdr">ANGUS™ — The Strategist</div>
-    <div id="msgs">
-      <div class="bubble system-msg">
-        Welcome! I'm ANGUS, your strategic health and wellness advisor. How can I help you today?
-      </div>
-    </div>
-    <div id="input-row">
-      <input id="inp" placeholder="Ask about health, nutrition, or Herbalife products..." autocomplete="off" />
-      <button id="send">Send</button>
+  <div class="header">ANGUS™ — The Strategist</div>
+  <div class="chat-container" id="chat">
+    <div class="message bot">
+      Welcome! I'm ANGUS, your strategic health and wellness advisor. How can I help you today?
     </div>
   </div>
 
+  <div class="input-row">
+    <input type="text" id="userInput" placeholder="Ask about health, nutrition, or Herbalife products..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
   <script>
-    const N8N_URL = "https://homecareers.app.n8n.cloud/webhook/angus-chat";
-
-    let userId = localStorage.getItem('angus_user_id');
-    if (!userId) {
-      userId = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('angus_user_id', userId);
-    }
-
-    const btn = document.getElementById("angus-button");
-    const wrap = document.getElementById("wrap");
-    const msgs = document.getElementById("msgs");
-    const inp = document.getElementById("inp");
-    const sendBtn = document.getElementById("send");
-
-    btn.addEventListener("click", () => {
-      const isVisible = wrap.style.display !== "none";
-      wrap.style.display = isVisible ? "none" : "block";
-      if (!isVisible) {
-        inp.focus();
-      }
-    });
-
-    function addMessage(content, type = "ai", showTimestamp = true) {
-      const div = document.createElement("div");
-      div.className = `bubble ${type}-msg`;
-      let html = content;
-      if (showTimestamp) {
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        html += `<div class="timestamp">${time}</div>`;
-      }
-      div.innerHTML = html;
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function showTyping() {
-      const div = document.createElement("div");
-      div.className = "bubble ai-msg typing-indicator";
-      div.innerHTML = '<span class="typing">ANGUS is thinking</span>';
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-      return div;
-    }
-
-    function removeTyping(element) {
-      if (element && element.parentNode) {
-        element.parentNode.removeChild(element);
-      }
-    }
-
     async function sendMessage() {
-      const text = inp.value.trim();
-      if (!text || sendBtn.disabled) return;
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
 
-      addMessage(`<strong>You:</strong> ${text}`, "user");
-      inp.value = "";
-
-      sendBtn.disabled = true;
-      sendBtn.textContent = "...";
-
-      const typingElement = showTyping();
+      appendMessage("You", message, "user");
+      input.value = "";
 
       try {
-        const response = await fetch(N8N_URL, {
+        const response = await fetch("https://homecareers.app.n8n.cloud/webhook/angus-chat", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "text/plain"
-          },
-          body: JSON.stringify({ 
-            message: text,
-            user_id: userId,
-            timestamp: new Date().toISOString()
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
         });
 
-        removeTyping(typingElement);
+        const text = await response.text();
+        const match = text.match(/"message"\s*:\s*"?=?(.+?)"?\s*}$/);
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
+        const parsed =
+          match && match[1]
+            ? match[1]
+                .replace(/^["{]+|["}]+$/g, "") // Remove extra quotes/brackets
+                .replace(/\\n/g, "<br>") // Preserve line breaks
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>") // Markdown bold
+            : "Sorry, something went wrong.";
 
-        const raw = await response.text();
-        const parsed = JSON.parse(raw);
-        addMessage(`<strong>ANGUS:</strong> ${parsed.message}`, "ai");
-
+        appendMessage("ANGUS", parsed, "bot", true);
       } catch (error) {
-        removeTyping(typingElement);
-        console.error("Chat error:", error);
-        
-        let errorMsg = "I'm having trouble connecting right now. Please try again.";
-        if (error.message.includes("Failed to fetch")) {
-          errorMsg = "Connection failed. Please check your internet and try again.";
-        }
-
-        addMessage(`<strong>Error:</strong> ${errorMsg}`, "error");
-      } finally {
-        sendBtn.disabled = false;
-        sendBtn.textContent = "Send";
-        inp.focus();
+        appendMessage("Error", "I'm having trouble connecting right now. Please try again.", "error");
       }
     }
 
-    sendBtn.addEventListener("click", sendMessage);
-    inp.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
+    function appendMessage(sender, text, className, isHTML = false) {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = `message ${className}`;
+      div.innerHTML = isHTML ? `<strong>${sender}:</strong> ${text}` : `<strong>${sender}:</strong> ${escapeHTML(text)}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
-    inp.addEventListener("focus", () => {
-      setTimeout(() => inp.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
-    });
-
-    console.log("ANGUS Chatbot initialized with user ID:", userId);
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, function (m) {
+        return ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        })[m];
+      });
+    }
   </script>
 </body>
 </html>
